@@ -97,7 +97,6 @@ export const hikvisionMiddleware = (req: Request, res: Response, next: NextFunct
  * Parse multipart/form-data manually - simplified for Hikvision
  */
 function parseMultipartData(rawData: string, contentType: string): any {
-  console.log(rawData);
   try {
     // Look for JSON data in the raw multipart data
     // Hikvision sends: Content-Disposition: form-data; name="event_log"\r\n\r\n{JSON_DATA}

@@ -7,7 +7,6 @@ import logger from '../utils/logger';
  */
 export const hikvisionMiddleware = (req: Request, res: Response, next: NextFunction): void => {
   const contentType = req.get('Content-Type') || '';
-  console.log('data', req.body);
   // logger.info('Hikvision webhook request', {
   //   method: req.method,
   //   url: req.url,
@@ -35,6 +34,7 @@ export const hikvisionMiddleware = (req: Request, res: Response, next: NextFunct
       rawData += chunk.toString();
     });
 
+    console.log('rawData', rawData);
     req.on('end', () => {
       logger.debug('Raw multipart data received', {
         length: rawData.length,
@@ -97,6 +97,7 @@ export const hikvisionMiddleware = (req: Request, res: Response, next: NextFunct
  * Parse multipart/form-data manually - simplified for Hikvision
  */
 function parseMultipartData(rawData: string, contentType: string): any {
+  console.log(rawData);
   try {
     // Look for JSON data in the raw multipart data
     // Hikvision sends: Content-Disposition: form-data; name="event_log"\r\n\r\n{JSON_DATA}

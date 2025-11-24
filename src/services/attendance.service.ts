@@ -44,7 +44,7 @@ export class AttendanceService {
    * Process raw Hikvision webhook payload into structured attendance data
    */
   async processAttendanceData(payload: HikvisionWebhookPayload): Promise<ProcessedAttendanceData> {
-    console.log('Processing attendance data:', payload);
+    // console.log('Processing attendance data:', payload);
     try {
       logger.debug('Processing attendance payload', {
         ipAddress: payload.ipAddress,

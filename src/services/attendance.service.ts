@@ -44,6 +44,7 @@ export class AttendanceService {
    * Process raw Hikvision webhook payload into structured attendance data
    */
   async processAttendanceData(payload: HikvisionWebhookPayload): Promise<ProcessedAttendanceData> {
+    console.log('Processing attendance data:', payload);
     try {
       logger.debug('Processing attendance payload', {
         ipAddress: payload.ipAddress,
@@ -104,7 +105,9 @@ export class AttendanceService {
   /**
    * Forward processed data to external webhook with retry logic
    */
-  private async forwardToExternalWebhook(payload: HikvisionWebhookPayload): Promise<WebhookResponse> {
+  private async forwardToExternalWebhook(
+    payload: HikvisionWebhookPayload
+  ): Promise<WebhookResponse> {
     const formData = new FormData();
     formData.append('event_log', JSON.stringify(payload));
 
@@ -112,7 +115,9 @@ export class AttendanceService {
 
     for (let attempt = 1; attempt <= this.retryConfig.maxRetries; attempt++) {
       try {
-        logger.debug(`Attempting webhook forward (attempt ${attempt}/${this.retryConfig.maxRetries})`);
+        logger.debug(
+          `Attempting webhook forward (attempt ${attempt}/${this.retryConfig.maxRetries})`
+        );
 
         const response: AxiosResponse = await this.httpClient.post(
           config.externalWebhookUrl,
@@ -322,7 +327,8 @@ export class AttendanceService {
    * Validate IP address format
    */
   private isValidIpAddress(ip: string): boolean {
-    const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+    const ipRegex =
+      /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
     return ipRegex.test(ip);
   }
 

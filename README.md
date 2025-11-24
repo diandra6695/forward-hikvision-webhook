@@ -323,9 +323,29 @@ npm run format   # Format code with Prettier
 
 ## 📈 Production Deployment
 
-### Recommended Setup
+### Windows Service (Recommended for Windows)
+
+For production deployment on Windows, install as a Windows Service for automatic startup and background operation:
+
+```bash
+# Install as Windows Service (requires Administrator privileges)
+npm run service:install
+
+# Service Management Commands
+npm run service:start      # Start service
+npm run service:stop       # Stop service
+npm run service:restart    # Restart service
+npm run service:status     # Check status
+npm run service:logs       # View logs
+npm run service:uninstall  # Remove service
+```
+
+📖 **Detailed Guide**: See [WINDOWS_SERVICE.md](./WINDOWS_SERVICE.md) for comprehensive Windows Service setup and management.
+
+### Cross-Platform Deployment
+
 1. **Environment Variables**: Configure all required environment variables
-2. **Process Manager**: Use PM2 or similar for process management
+2. **Process Manager**: Use PM2, Supervisor, or similar for process management
 3. **Load Balancer**: Use nginx or similar for load balancing
 4. **Monitoring**: Set up log aggregation and monitoring
 5. **SSL/TLS**: Configure HTTPS for production

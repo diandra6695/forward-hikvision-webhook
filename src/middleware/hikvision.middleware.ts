@@ -7,7 +7,7 @@ import logger from '../utils/logger';
  */
 export const hikvisionMiddleware = (req: Request, res: Response, next: NextFunction): void => {
   const contentType = req.get('Content-Type') || '';
-
+  console.log('data', req.body);
   // logger.info('Hikvision webhook request', {
   //   method: req.method,
   //   url: req.url,

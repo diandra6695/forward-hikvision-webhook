@@ -11,6 +11,6 @@ app.post('/webhook/hikvision', (req, res) => {
   res.send('OK');
 });
 
-app.listen(3001, () => {
-  console.log('Webhook server running at http://0.0.0.0:3001');
+app.listen(process.env.PORT ?? 3000, () => {
+  console.log('Webhook server running at http://0.0.0.0:3000');
 });

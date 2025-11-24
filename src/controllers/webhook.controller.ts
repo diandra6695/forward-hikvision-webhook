@@ -54,7 +54,7 @@ export class WebhookController {
       } else {
         data = req.body;
       }
-      const processedData = this.attendanceService.processAttendanceData(data.event_log);
+      const processedData = await this.attendanceService.processAttendanceData(data.event_log);
 
       // Log successful processing
       const summary = this.attendanceService.getAttendanceSummary(processedData);

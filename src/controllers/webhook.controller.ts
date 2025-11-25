@@ -15,7 +15,7 @@ export class WebhookController {
    * Handle incoming Hikvision webhook
    */
   async handleHikvisionWebhook(req: Request, res: Response): Promise<void> {
-    console.log(req.body);
+    // console.log(req.body);
     const startTime = Date.now();
     // const response: WebhookResponse = {
     //   success: true,

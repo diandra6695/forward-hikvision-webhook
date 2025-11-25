@@ -8,6 +8,7 @@ import { config } from '../config';
  */
 export const hikvisionMiddleware = (req: Request, res: Response, next: NextFunction): void => {
   const contentType = req.get('Content-Type') || '';
+  // console.log('test', req);
 
   // if (config.isDevelopment) {
   //   let rawData = '';

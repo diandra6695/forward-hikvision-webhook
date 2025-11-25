@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import logger from '../utils/logger';
+import { config } from '../config';
 
 /**
  * Middleware to handle Hikvision webhook requests
@@ -7,20 +8,27 @@ import logger from '../utils/logger';
  */
 export const hikvisionMiddleware = (req: Request, res: Response, next: NextFunction): void => {
   const contentType = req.get('Content-Type') || '';
-  // logger.info('Hikvision webhook request', {
-  //   method: req.method,
-  //   url: req.url,
-  //   contentType,
-  //   userAgent: req.get('User-Agent'),
-  //   ip: req.ip,
-  // });
+  logger.info('Hikvision webhook request', {
+    method: req.method,
+    url: req.url,
+    contentType,
+    userAgent: req.get('User-Agent'),
+    ip: req.ip,
+  });
 
-  // If we already have parsed body, continue
+  // If we already have parsed body (from Express JSON parser), continue
   if (req.body && Object.keys(req.body).length > 0) {
-    logger.debug('Request body already parsed', {
+    logger.info('Request body already parsed by Express JSON parser', {
       bodyType: typeof req.body,
       bodyKeys: Object.keys(req.body),
+      contentType,
     });
+
+    // Display full request data in development mode
+    if (config.isDevelopment) {
+      displayRequestData(req, 'Express JSON Parser');
+    }
+
     next();
     return;
   }
@@ -46,9 +54,14 @@ export const hikvisionMiddleware = (req: Request, res: Response, next: NextFunct
         const parsedData = parseMultipartData(rawData, contentType);
         if (parsedData) {
           req.body = parsedData;
-          // logger.info('Successfully parsed multipart data', {
-          //   parsedKeys: Object.keys(parsedData),
-          // });
+          logger.info('Successfully parsed multipart data', {
+            parsedKeys: Object.keys(parsedData),
+          });
+
+          // Display full request data in development mode
+          if (config.isDevelopment) {
+            displayRequestData(req, 'Multipart Form-Data');
+          }
         } else {
           logger.warn('Failed to parse multipart data');
         }
@@ -64,7 +77,14 @@ export const hikvisionMiddleware = (req: Request, res: Response, next: NextFunct
     return;
   }
 
-  // Handle other content types
+  // Handle direct JSON content type
+  if (contentType.includes('application/json')) {
+    logger.info('Processing direct JSON content');
+    next();
+    return;
+  }
+
+  // Handle other content types or when content-type is not specified
   let rawData = '';
   req.on('data', chunk => {
     rawData += chunk;
@@ -76,22 +96,113 @@ export const hikvisionMiddleware = (req: Request, res: Response, next: NextFunct
       preview: rawData.substring(0, 200) + (rawData.length > 200 ? '...' : ''),
     });
 
-    // Try to parse as JSON
-    if (rawData.trim().startsWith('{')) {
+    // Try to parse as JSON if it looks like JSON
+    const trimmedData = rawData.trim();
+    if (trimmedData.startsWith('{') && trimmedData.endsWith('}')) {
       try {
-        const parsedData = JSON.parse(rawData);
+        const parsedData = JSON.parse(trimmedData);
         req.body = parsedData;
-        logger.info('Successfully parsed JSON data');
+        logger.info('Successfully parsed JSON data from raw request', {
+          keys: Object.keys(parsedData),
+        });
+
+        // Display full request data in development mode
+        if (config.isDevelopment) {
+          displayRequestData(req, 'Raw JSON');
+        }
       } catch (error) {
         logger.warn('Failed to parse as JSON', {
           error: error instanceof Error ? error.message : 'Unknown error',
+          dataPreview: trimmedData.substring(0, 100) + '...',
         });
+      }
+    } else if (trimmedData) {
+      logger.info('Received non-JSON data, treating as raw text', {
+        dataType: typeof trimmedData,
+        preview: trimmedData.substring(0, 50) + '...',
+      });
+      req.body = { raw: trimmedData };
+
+      // Display full request data in development mode
+      if (config.isDevelopment) {
+        displayRequestData(req, 'Raw Text');
       }
     }
 
     next();
   });
 };
+
+/**
+ * Display full request data in development mode for debugging
+ */
+function displayRequestData(req: Request, source: string): void {
+  console.log('\n' + '='.repeat(80));
+  console.log('🔍 WEBHOOK REQUEST DEBUG - DEVELOPMENT MODE');
+  console.log('='.repeat(80));
+
+  // Request headers
+  console.log('\n📤 Request Headers:');
+  console.log('  Method:', req.method);
+  console.log('  URL:', req.url);
+  console.log('  Content-Type:', req.get('Content-Type') || 'Not specified');
+  console.log('  User-Agent:', req.get('User-Agent') || 'Not specified');
+  console.log('  IP Address:', req.ip || req.connection.remoteAddress || 'Unknown');
+  console.log('  Content-Length:', req.get('Content-Length') || 'Not specified');
+
+  // Additional headers that might be useful
+  const interestingHeaders = ['Authorization', 'X-Forwarded-For', 'X-Real-IP', 'Origin', 'Referer'];
+  interestingHeaders.forEach(header => {
+    const value = req.get(header);
+    if (value) {
+      console.log(`  ${header}:`, value);
+    }
+  });
+
+  console.log('\n📥 Request Body Data:');
+  console.log(`  Source: ${source}`);
+  console.log(`  Body Type: ${typeof req.body}`);
+  console.log(`  Keys: [${Object.keys(req.body).join(', ')}]`);
+
+  if (req.body) {
+    console.log('\n📋 Complete Body Content:');
+    try {
+      console.log(JSON.stringify(req.body, null, 2));
+    } catch (error) {
+      console.log('  Error stringifying body:', error);
+      console.log('  Raw body:', req.body);
+    }
+  } else {
+    console.log('  No body data available');
+  }
+
+  // Extract and display key HikVision data if present
+  if (req.body.AccessControllerEvent) {
+    console.log('\n🎯 Key HikVision Data:');
+    const event = req.body.AccessControllerEvent;
+    console.log(`  Device Name: ${event.deviceName || 'Unknown'}`);
+    console.log(`  Employee Name: ${event.name || 'Unknown'}`);
+    console.log(`  Employee No: ${event.employeeNoString || 'Unknown'}`);
+    console.log(`  Card No: ${event.cardNo || 'Unknown'}`);
+    console.log(`  Attendance Status: ${event.attendanceStatus || 'Unknown'}`);
+    console.log(`  Event Type: ${event.subEventType || 'Unknown'}`);
+    console.log(`  Door No: ${event.doorNo || 'Unknown'}`);
+    console.log(`  Timestamp: ${req.body.dateTime || 'Unknown'}`);
+  }
+
+  // Show device info if available at root level
+  if (req.body.ipAddress) {
+    console.log('\n🌐 Device Information:');
+    console.log(`  IP Address: ${req.body.ipAddress}`);
+    console.log(`  Port: ${req.body.portNo || 'Unknown'}`);
+    console.log(`  Protocol: ${req.body.protocol || 'Unknown'}`);
+    console.log(`  MAC Address: ${req.body.macAddress || 'Unknown'}`);
+  }
+
+  console.log('\n' + '='.repeat(80));
+  console.log('🔍 END OF DEBUG INFO');
+  console.log('='.repeat(80) + '\n');
+}
 
 /**
  * Parse multipart/form-data manually - simplified for Hikvision

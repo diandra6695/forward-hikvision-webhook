@@ -14,6 +14,7 @@ A robust, production-ready Express service for handling Hikvision attendance web
 - 🔧 **Configurable**: Environment-based configuration management
 - 🛡️ **Input Validation**: Robust validation and sanitization for all inputs
 - 🔄 **Retry Logic**: Exponential backoff retry mechanism for external webhooks
+- 📋 **Multiple Formats**: Supports both `multipart/form-data` and `application/json` payloads
 
 ## 📋 Supported Events
 
@@ -86,7 +87,10 @@ npm start
 POST /webhook/hikvision
 ```
 
-Accepts Hikvision Access Controller Event webhooks and processes them into structured attendance data.
+Accepts Hikvision Access Controller Event webhooks and processes them into structured attendance data. **Supports both `multipart/form-data` and `application/json` payloads**.
+
+#### JSON Payload Format
+You can send data directly as JSON with `Content-Type: application/json`:
 
 **Example Request:**
 ```json
@@ -124,6 +128,15 @@ Accepts Hikvision Access Controller Event webhooks and processes them into struc
     "purePwdVerifyEnable": true
   }
 }
+```
+
+#### Form-Data Payload Format (Hikvision Default)
+The webhook also supports the original Hikvision `multipart/form-data` format with the JSON data in the `event_log` field.
+
+**Request Example (cURL):**
+```bash
+curl -X POST http://localhost:3000/webhook/hikvision \
+  -F "event_log={\"ipAddress\":\"192.168.1.11\",\"AccessControllerEvent\":{\"name\":\"John Doe\"}}"
 ```
 
 **Success Response:**
@@ -299,6 +312,62 @@ npm run format   # Format code with Prettier
 | `EXTERNAL_WEBHOOK_TIMEOUT` | External webhook timeout (ms) | `10000` |
 | `MAX_RETRIES` | Maximum retry attempts for forwarding | `3` |
 
+### Development Mode Features
+
+When `NODE_ENV=development` (default), the webhook provides enhanced debugging capabilities:
+
+- **🔍 Full Request Logging**: Every incoming webhook request is displayed with:
+  - Complete HTTP headers (User-Agent, IP, Content-Type, etc.)
+  - Full request body in formatted JSON
+  - Source of the request (Express parser, multipart, raw JSON, etc.)
+  - Key HikVision data extracted and highlighted
+
+- **📋 Smart Data Extraction**: Automatically displays important attendance information:
+  - Employee name and number
+  - Device information
+  - Attendance status (check-in/check-out)
+  - Timestamp and event details
+
+**Example Development Output:**
+```
+================================================================================
+🔍 WEBHOOK REQUEST DEBUG - DEVELOPMENT MODE
+================================================================================
+
+📤 Request Headers:
+  Method: POST
+  URL: /webhook/hikvision
+  Content-Type: application/json
+  User-Agent: Hikvision-Test-Client
+  IP Address: ::1
+  Content-Length: 512
+
+📥 Request Body Data:
+  Source: Express JSON Parser
+  Body Type: object
+  Keys: [ipAddress, portNo, AccessControllerEvent, dateTime]
+
+📋 Complete Body Content:
+{
+  "ipAddress": "192.168.1.11",
+  "AccessControllerEvent": {
+    "name": "John Doe",
+    "employeeNoString": "001",
+    "attendanceStatus": "checkIn"
+  }
+}
+
+🎯 Key HikVision Data:
+  Device Name: Test Device
+  Employee Name: John Doe
+  Employee No: 001
+  Card No: 12345678
+  Attendance Status: checkIn
+  Event Type: 38
+
+================================================================================
+```
+
 ## 🔧 Monitoring & Operations
 
 ### Health Monitoring
@@ -359,6 +428,66 @@ RUN npm ci --only=production
 COPY dist ./dist
 EXPOSE 3000
 CMD ["npm", "start"]
+```
+
+## 🧪 Testing Webhook Formats
+
+The webhook includes a test script to verify both JSON and form-data formats work correctly:
+
+### Running Tests
+
+1. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+
+2. **Run the test script:**
+   ```bash
+   node test-json-webhook.js
+   ```
+
+### Manual Testing Examples
+
+#### JSON Payload (with Content-Type header)
+```bash
+curl -X POST http://localhost:3000/webhook/hikvision \
+  -H "Content-Type: application/json" \
+  -d '{
+    "ipAddress": "192.168.1.11",
+    "portNo": 4000,
+    "protocol": "HTTP",
+    "dateTime": "2025-10-22T13:43:48+08:00",
+    "eventType": "AccessControllerEvent",
+    "eventState": "active",
+    "AccessControllerEvent": {
+      "deviceName": "Test Device",
+      "subEventType": 38,
+      "name": "John Doe",
+      "employeeNoString": "001",
+      "attendanceStatus": "checkIn"
+    }
+  }'
+```
+
+#### Raw JSON Payload (without Content-Type header)
+```bash
+curl -X POST http://localhost:3000/webhook/hikvision \
+  -d '{
+    "ipAddress": "192.168.1.11",
+    "AccessControllerEvent": {
+      "deviceName": "Test Device",
+      "subEventType": 38,
+      "name": "Jane Smith",
+      "employeeNoString": "002",
+      "attendanceStatus": "checkIn"
+    }
+  }'
+```
+
+#### Form-Data Payload (Hikvision format)
+```bash
+curl -X POST http://localhost:3000/webhook/hikvision \
+  -F "event_log={\"ipAddress\":\"192.168.1.11\",\"AccessControllerEvent\":{\"deviceName\":\"Test Device\",\"subEventType\":38,\"name\":\"Bob Wilson\",\"employeeNoString\":\"003\",\"attendanceStatus\":\"checkIn\"}}"
 ```
 
 ## 🤝 Contributing

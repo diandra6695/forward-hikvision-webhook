@@ -42,7 +42,10 @@ export const hikvisionMiddleware = (req: Request, res: Response, next: NextFunct
       rawData += chunk.toString();
     });
 
-    console.log('rawData', rawData);
+    if (config.isDevelopment) {
+      console.log('rawData', rawData);
+    }
+
     req.on('end', () => {
       logger.debug('Raw multipart data received', {
         length: rawData.length,

@@ -52,14 +52,22 @@ app.post('/test', upload.none(), (req: Request, res: Response) => {
     // Parse JSON string from form-data
     const data = JSON.parse(req.body.event_log);
 
-    console.log('test endpoint received:', data);
+    // console.log('test endpoint received:', data);
+
+    logger.info('Test endpoint received event_log data', {
+      dataKeys: Object.keys(data),
+    });
 
     res.status(200).json({
       message: 'Test endpoint received data',
       data: data,
     });
   } catch (error) {
-    console.error('Error parsing event_log:', error);
+    // console.error('Error parsing event_log:', error);
+    logger.error('Error parsing event_log in /test endpoint', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      receivedData: req.body.event_log,
+    });
     res.status(400).json({
       message: 'Invalid JSON in event_log field',
       error: error instanceof Error ? error.message : 'Unknown error',

@@ -8,9 +8,14 @@ import { config } from '../config';
  */
 export const hikvisionMiddleware = (req: Request, res: Response, next: NextFunction): void => {
   const contentType = req.get('Content-Type') || '';
-  if (config.isDevelopment) {
-    console.log('body before middleware', req.body);
-  }
+
+  // if (config.isDevelopment) {
+  //   let rawData = '';
+  //   req.on('data', chunk => {
+  //     rawData += chunk.toString();
+  //   });
+  //   console.log('body before middleware', req);
+  // }
   logger.info('Hikvision webhook request', {
     method: req.method,
     url: req.url,

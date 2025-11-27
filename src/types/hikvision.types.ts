@@ -43,6 +43,7 @@ export interface HikvisionWebhookPayload {
   eventType: 'AccessControllerEvent';
   eventState: 'active' | 'inactive';
   eventDescription: string;
+  eventDetail: AccessControllerEvent;
   AccessControllerEvent: AccessControllerEvent;
 }
 

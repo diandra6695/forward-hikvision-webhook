@@ -57,6 +57,7 @@ export class AttendanceService {
       }
 
       const { AccessControllerEvent, ipAddress, dateTime } = payload;
+
       const attendanceStatus = this.determineAttendanceStatus(AccessControllerEvent.subEventType);
 
       const employeeData = this.extractEmployeeData(AccessControllerEvent);
@@ -108,6 +109,7 @@ export class AttendanceService {
   private async forwardToExternalWebhook(
     payload: HikvisionWebhookPayload
   ): Promise<WebhookResponse> {
+    // console.log('Payload data', payload);
     const formData = new FormData();
     formData.append('event_log', JSON.stringify(payload));
 

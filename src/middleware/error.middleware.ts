@@ -57,7 +57,7 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction): 
       duration: `${duration}ms`,
       ip: req.ip,
       userAgent: req.get('User-Agent'),
-      data: req.method === 'GET' ? req.query : req.body,
+      // data: req.method === 'GET' ? req.query : req.body,
     });
   });
 

@@ -39,6 +39,20 @@ app.post(
   webhookController.handleHikvisionWebhook.bind(webhookController)
 );
 
+// New Hikvision Access Controller endpoint for multipart form data
+app.post(
+  '/webhook/hikvision-access',
+  upload.none(),
+  webhookController.handleHikvisionAccessWebhook.bind(webhookController)
+);
+
+// Direct Hikvision Access Controller endpoint for clean payload
+app.post(
+  '/webhook/hikvision-direct',
+  upload.none(),
+  webhookController.handleHikvisionDirectWebhook.bind(webhookController)
+);
+
 app.post('/test', upload.none(), (req: Request, res: Response) => {
   try {
     // Check if event_log exists
@@ -86,6 +100,8 @@ app.get('/', (req, res) => {
       health: '/health',
       info: '/info',
       webhook: config.webhookPath,
+      accessController: '/webhook/hikvision-access',
+      test: '/test',
     },
   });
 });

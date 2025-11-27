@@ -68,7 +68,7 @@ app.post('/test', upload.none(), (req: Request, res: Response) => {
       error: error instanceof Error ? error.message : 'Unknown error',
       receivedData: req.body.event_log,
     });
-    return res.status(400).json({
+    return res.status(200).json({
       message: 'Invalid JSON in event_log field',
       error: error instanceof Error ? error.message : 'Unknown error',
       receivedData: req.body.event_log,

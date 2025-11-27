@@ -43,7 +43,7 @@ app.post('/test', upload.none(), (req: Request, res: Response) => {
   try {
     // Check if event_log exists
     if (!req.body.event_log) {
-      return res.status(400).json({
+      return res.status(200).json({
         message: 'event_log field is required',
         receivedFields: Object.keys(req.body),
       });
